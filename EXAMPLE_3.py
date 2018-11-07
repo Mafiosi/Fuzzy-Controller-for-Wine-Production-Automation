@@ -19,6 +19,7 @@ rule0 = ctrl.Rule(antecedent=((error['nb'] & delta['nb']) |
 (error['ns'] & delta['nb']) |
 (error['nb'] & delta['ns'])),
 consequent=output['nb'], label='rule nb')
+
 rule1 = ctrl.Rule(antecedent=((error['nb'] & delta['ze']) |
 (error['nb'] & delta['ps']) |
 (error['ns'] & delta['ns']) |
@@ -27,12 +28,14 @@ rule1 = ctrl.Rule(antecedent=((error['nb'] & delta['ze']) |
 (error['ze'] & delta['nb']) |
 (error['ps'] & delta['nb'])),
 consequent=output['ns'], label='rule ns')
+
 rule2 = ctrl.Rule(antecedent=((error['nb'] & delta['pb']) |
 (error['ns'] & delta['ps']) |
 (error['ze'] & delta['ze']) |
 (error['ps'] & delta['ns']) |
 (error['pb'] & delta['nb'])),
 consequent=output['ze'], label='rule ze')
+
 rule3 = ctrl.Rule(antecedent=((error['ns'] & delta['pb']) |
 (error['ze'] & delta['pb']) |
 (error['ze'] & delta['ps']) |
@@ -41,6 +44,7 @@ rule3 = ctrl.Rule(antecedent=((error['ns'] & delta['pb']) |
 (error['pb'] & delta['ze']) |
 (error['pb'] & delta['ns'])),
 consequent=output['ps'], label='rule ps')
+
 rule4 = ctrl.Rule(antecedent=((error['ps'] & delta['pb']) |
 (error['pb'] & delta['pb']) |
 (error['pb'] & delta['ps'])),
@@ -63,6 +67,7 @@ for i in range(21):
         sim.input['delta'] = y[i, j]
         sim.compute()
         z[i, j] = sim.output['output']
+
 # Plot the result in pretty 3D with alpha blending
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D # Required for 3D plotting
