@@ -7,6 +7,9 @@ import matplotlib.pyplot as plt
 import skfuzzy as fuzz
 import skfuzzy.control as control
 from queue import Queue
+import time
+import array as arr
+import datetime
 
 ##############################
 ##     EOF  LIBRARIES       ##
@@ -195,13 +198,72 @@ def fuzzy_initialization(use_tanins):
     else:
         return density, color, remontagem, chiller
 
+
 # NORMALIZE VALUES
-def normalize(density_ref, density_sensor, color_ref, color_sensor, temperature_ref, temperature_sensor,
-              tanins_ref, tanins_sensor, time_ref):
+def norm_and_error(values, results_in, initial_date):
 
     # NORMALIZE DENSITY
+    results_in[0] = abs(round((values[5] - values[0])*100))
+
+    # NORMALIZE COLOR
+    results_in[1] = abs(round((values[6] - values[1])*100))
+
+    # NORMALIZE TEMPERATURE
+    results_in[2] = abs(round((values[7] - values[2])*100))
+
+    # NORMALIZE TANINS
+    results_in[3] = abs(round((values[8] - values[3])*100))
+
+    # NORMALIZE TIME
+    time_delta = datetime.date.today() - initial_date
+    results_in[4] = time_delta.days
+
+    return results_in
 
 
+# GET INPUTS FROM MAIN PROGRAM
+def get_input(communication_queue, values):
+
+    # WAIT FOR MESSAGE FROM MAIN PROGRAM
+    # -1 - SENSOR INPUT
+    # -2 - CHANGE OF REFERENCE VALUES
+
+    while True:
+
+        rule = communication_queue.get()
+
+        # WILL RECEIVE SENSOR VALUE
+        if rule == -1:
+            for i in range (4):
+                values[i+5] = communication_queue.get()
+            break
+
+            # values[5] --->  DENSITY       SENSOR
+            # values[6] --->  COLOR         SENSOR
+            # values[7] --->  TEMPERATURE   SENSOR
+            # values[8] --->  TANINS        SENSOR
+
+        # WILL RECEIVE REFERENCE VALUE
+        if rule == -2:
+
+            for i in range(5):
+                temp = communication_queue.get()
+                if temp != -1:
+                    values[i] = temp
+            break
+
+            # values[0] --->  DENSITY       REFERENCE
+            # values[1] --->  COLOR         REFERENCE
+            # values[2] --->  TEMPERATURE   REFERENCE
+            # values[3] --->  TANINS        REFERENCE
+            # values[4] --->  TIME          REFERENCE
+
+        # RETURNS ERROR MESSAGE
+        else:
+            communication_queue.put(-1)
+            time.sleep(3)
+
+    return rule, values
 
 
 # THIS IS THE MAIN CONTROL ROUTINE
@@ -212,8 +274,8 @@ def control_routine(communication_queue):
     ##############################
     # VARIABLES TO BE RECEIVED BY INITIAL CALL OF FUNCTION BY MAIN THREAD
 
-    # q          - Queue Variable Create One and pass values as such
-    #                       from queue import Queue
+    # communication_queue - Queue Variable
+    # HOW TO CREATE       - from queue import Queue
     #                       q = Queue()
     #                       q.put(density_from_sensor)
     #                       q.put(color_from_sensor) and so forth (4 times)
@@ -223,65 +285,21 @@ def control_routine(communication_queue):
     ##############################
     ##     CONTROL VARIABLES    ##
     ##############################
-    # VARIABLES TO CONTROL IMPLEMENTATION OF FUZZY
+    # VARIABLES TO CONTROL THE BEHAVIOUR OF THE PROGRAM
 
     use_tanins = False      # USE TANINS TABLE OR NOT
-    use_sensor = False      # SIMULATE USING SENSORS OR NOT
+    use_sensor = False      # USING SENSORS OR NOT - IF SIMULATING CHOOSE FALSE
 
 
     ##############################
     ##     GENERIC VARIABLES    ##
     ##############################
     # GENERIC VALUE TO BE USED BY MAIN FUNCTION
+    values = arr.array('i', [0, 0, 0, 0, 0, 0, 0, 0, 0])
+    results_in = arr.array('i', [0, 0, 0, 0, 0])
+    results_out = arr.array('B', [0, 0])
+    initial_date = datetime.date.today()
 
-
-
-
-    ##############################
-    ##  REFERENCE DEFINITION    ##
-    ##############################
-    # DEFINE A REFERENCE FOR EACH VALUE
-
-    if use_sensor:
-
-        density_ref = communication_queue.get()
-        color_ref = communication_queue.get()
-        temperature_ref = communication_queue.get()
-        tanins_ref = communication_queue.get()
-        time_ref = communication_queue.get()
-
-    # USE THIS TO SET INITIAL SIMULATION REFERENCES
-    else:
-        density_ref = 0.995     # FINAL VALUE FOR DENSITY in kg/L
-        color_ref = 400         # FINAL VALUE FOR COLOR in NTU
-        temperature_ref = 25    # CONSTANT VALUE FOR TEMPERATURE in ºC
-        tanins_ref = 15         # VALUE FOR TANINS in percentage% / Volume
-        time_ref = 15           # FINAL VALUE FOR TIME in days
-
-    ##############################
-    ##    INPUT DEFINITION      ##
-    ##############################
-    # DEFINES VALUES FROM SENSORS
-
-    # WAIT FOR SENSOR INPUT
-    if use_sensor:
-
-        density_sensor = communication_queue.get()
-        color_sensor = communication_queue.get()
-        temperature_sensor = communication_queue.get()
-        tanins_sensor = communication_queue.get()
-
-    # USE THIS TO SET INITIAL SIMULATION VALUES
-    else:
-
-        density_sensor = 0.2
-        color_sensor = 0.4
-        temperature_sensor = 0.3
-        tanins_sensor = 0.7
-
-    # NORMALIZATION OF VALUES
-    normalize(density_ref, density_sensor, color_ref, color_sensor, temperature_ref, temperature_sensor,
-              tanins_ref, tanins_sensor, time_ref)
 
     ##############################
     ##   FUZZY INITIALIZATION   ##
@@ -293,22 +311,49 @@ def control_routine(communication_queue):
     else:
         density, color, remontagem, chiller = fuzzy_initialization(use_tanins)
 
+
+    ##############################
+    ##  REFERENCE DEFINITION    ##
+    ##############################
+    # DEFINE AN INITIAL REFERENCE FOR EACH VALUE
+
+    if use_sensor:
+
+        values[0] = communication_queue.get()   # DENSITY       REFERENCE
+        values[1] = communication_queue.get()   # COLOR         REFERENCE
+        values[2] = communication_queue.get()   # TEMPERATURE   REFERENCE
+        values[3] = communication_queue.get()   # TANINS        REFERENCE
+        values[4] = communication_queue.get()   # TIME          REFERENCE
+
+    # USE THIS TO SET INITIAL SIMULATION REFERENCES
+    else:
+        values[0] = 995                         # DENSITY       REFERENCE - FINAL VALUE FOR DENSITY in kg/L
+        values[1] = 400                         # COLOR         REFERENCE - FINAL VALUE FOR COLOR in NTU
+        values[2] = 25                          # TEMPERATURE   REFERENCE - CONSTANT VALUE FOR TEMPERATURE in ºC
+        values[3] = 15                          # TANINS        REFERENCE - VALUE FOR TANINS in percentage% / Volume
+        values[4] = 15                          # TIME          REFERENCE - FINAL VALUE FOR TIME in days
+        values[5] = 1000                        # DENSITY       SENSOR
+        values[6] = 100                         # COLOR         SENSOR
+        values[7] = 22                          # TEMPERATURE   SENSOR
+        values[8] = 12                          # TANINS        SENSOR
+
+    ##############################
+    ##    MAIN CONTROL CYCLE    ##
+    ##############################
+    # WAITS FOR INPUTS, NORMALIZES, CALCULATES, SENDS DATA
+
     while True:
 
-        # WAIT FOR SENSOR INPUT
+        ##############################
+        ##    INPUT DEFINITION      ##
+        ##############################
+        # DEFINES VALUES FROM SENSORS
+
         if use_sensor:
-            density_sensor = communication_queue.get()
-            color_sensor = communication_queue.get()
-            temperature_sensor = communication_queue.get()
-            tanins_sensor = communication_queue.get()
+            values = get_input(communication_queue,values)
 
-        # USE THIS TO SIMULATE VALUES
-        else:
-            density_sensor = 0.2
-            color_sensor = 0.4
-            temperature_sensor = 0.3
-            tanins_sensor = 0.7
+        # NORMALIZATION OF VALUES
+        results_in = norm_and_error(values, results_in, initial_date)
 
-        calculate_error()
 
 
