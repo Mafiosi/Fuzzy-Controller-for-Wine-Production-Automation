@@ -17,7 +17,7 @@ import datetime
 
 
 # INITIALIZATION OF CONTROLLER
-def fuzzy_initialization(use_tanins):
+def fuzzy_initialization():
 
     ##############################
     ##    FUZZY DEFINITION      ##
@@ -96,34 +96,33 @@ def fuzzy_initialization(use_tanins):
 
     ##############################
     ####  TANINS
-    if use_tanins:
-        # MEMBERSHIPS
-        # TIME_VAR ALREADY CREATED BEFORE IN DENSITY
-        tanins_error = control.Antecedent(np.arange(0, 1.01, 0.01), 'tanins_error')
-        tanins_out = control.Consequent(np.arange(0, 1.01, 0.01), 'tanins_out')
+    # MEMBERSHIPS
+    # TIME_VAR ALREADY CREATED BEFORE IN DENSITY
+    tanins_error = control.Antecedent(np.arange(0, 1.01, 0.01), 'tanins_error')
+    tanins_out = control.Consequent(np.arange(0, 1.01, 0.01), 'tanins_out')
 
-        # MEMBERSHIP SHAPE
-        # TIME_VAR ALREADY DEFINED BEFORE IN DENSITY
-        tanins_error.automf(3, 'quant', standard_in_3)
-        tanins_out.automf(3, 'quant', standard_out_3)
+    # MEMBERSHIP SHAPE
+    # TIME_VAR ALREADY DEFINED BEFORE IN DENSITY
+    tanins_error.automf(3, 'quant', standard_in_3)
+    tanins_out.automf(3, 'quant', standard_out_3)
 
-        # RULES
-        rule_tanins_1 = control.Rule(time_var['BIG LOW'], tanins_out['GOOD'])
-        rule_tanins_2 = control.Rule(time_var['LOW'], tanins_out['GOOD'])
-        rule_tanins_3 = control.Rule(time_var['MEDIUM'] & tanins_error['HIGH'], tanins_out['MEDIUM'])
-        rule_tanins_4 = control.Rule(time_var['MEDIUM'] & (tanins_error['MEDIUM'] | tanins_error['LOW']), tanins_out['GOOD'])
-        rule_tanins_5 = control.Rule(time_var['HIGH'] & tanins_error['HIGH'], tanins_out['BAD'])
-        rule_tanins_6 = control.Rule(time_var['HIGH'] & tanins_error['MEDIUM'], tanins_out['MEDIUM'])
-        rule_tanins_7 = control.Rule(time_var['HIGH'] & tanins_error['LOW'], tanins_out['GOOD'])
-        rule_tanins_8 = control.Rule(time_var['BIG HIGH'] & (tanins_error['HIGH'] | tanins_error['MEDIUM']), tanins_out['BAD'])
-        rule_tanins_9 = control.Rule(time_var['BIG HIGH'] & tanins_error['LOW'], tanins_out['MEDIUM'])
+    # RULES
+    rule_tanins_1 = control.Rule(time_var['BIG LOW'], tanins_out['GOOD'])
+    rule_tanins_2 = control.Rule(time_var['LOW'], tanins_out['GOOD'])
+    rule_tanins_3 = control.Rule(time_var['MEDIUM'] & tanins_error['HIGH'], tanins_out['MEDIUM'])
+    rule_tanins_4 = control.Rule(time_var['MEDIUM'] & (tanins_error['MEDIUM'] | tanins_error['LOW']), tanins_out['GOOD'])
+    rule_tanins_5 = control.Rule(time_var['HIGH'] & tanins_error['HIGH'], tanins_out['BAD'])
+    rule_tanins_6 = control.Rule(time_var['HIGH'] & tanins_error['MEDIUM'], tanins_out['MEDIUM'])
+    rule_tanins_7 = control.Rule(time_var['HIGH'] & tanins_error['LOW'], tanins_out['GOOD'])
+    rule_tanins_8 = control.Rule(time_var['BIG HIGH'] & (tanins_error['HIGH'] | tanins_error['MEDIUM']), tanins_out['BAD'])
+    rule_tanins_9 = control.Rule(time_var['BIG HIGH'] & tanins_error['LOW'], tanins_out['MEDIUM'])
 
-        # CONTROL SYSTEM
-        tanins_control = control.ControlSystem([rule_tanins_1, rule_tanins_2, rule_tanins_3, rule_tanins_4,
-                                                rule_tanins_5, rule_tanins_6, rule_tanins_7, rule_tanins_8,
-                                                rule_tanins_9])
+    # CONTROL SYSTEM
+    tanins_control = control.ControlSystem([rule_tanins_1, rule_tanins_2, rule_tanins_3, rule_tanins_4,
+                                            rule_tanins_5, rule_tanins_6, rule_tanins_7, rule_tanins_8,
+                                            rule_tanins_9])
 
-        tanins = control.ControlSystemSimulation(tanins_control)
+    tanins = control.ControlSystemSimulation(tanins_control)
 
     ##############################
     ####  REMONTAGEM
@@ -135,10 +134,7 @@ def fuzzy_initialization(use_tanins):
 
     # MEMBERSHIP SHAPE (TANINS NAME DEPEND ON TABLE USE)
     color_in.automf(3, 'quant', special_inout_3)
-    if use_tanins:
-        tanins_in.automf(3, 'quant', special_inout_3)
-    else:
-        tanins_in.automf(3, 'quant', special_in_3)
+    tanins_in.automf(3, 'quant', special_inout_3)
     remontagem_out['NAO'] = fuzz.trapmf(remontagem_out.universe, [0, 0, 0.2, 0.2])
     remontagem_out['SIM'] = fuzz.trapmf(remontagem_out.universe, [0.8, 0.8, 1, 1])
 
@@ -146,13 +142,8 @@ def fuzzy_initialization(use_tanins):
     # RULES (TANINS NAME DEPEND ON TABLE USE)
     rule_remontagem_1 = control.Rule(color_in['GOOD'], remontagem_out['NAO'])
     rule_remontagem_2 = control.Rule(color_in['BAD'], remontagem_out['SIM'])
-    if use_tanins:
-        rule_remontagem_3 = control.Rule(color_in['MEDIUM'] & tanins_in['GOOD'], remontagem_out['NAO'])
-        rule_remontagem_4 = control.Rule(color_in['MEDIUM'] & (tanins_in['MEDIUM'] | tanins_in['BAD']), remontagem_out['SIM'])
-    else:
-        rule_remontagem_3 = control.Rule(color_in['MEDIUM'] & tanins_in['HIGH'], remontagem_out['NAO'])
-        rule_remontagem_4 = control.Rule(color_in['MEDIUM'] & (tanins_in['LOW'] | tanins_in['OK']), remontagem_out['SIM'])
-
+    rule_remontagem_3 = control.Rule(color_in['MEDIUM'] & tanins_in['GOOD'], remontagem_out['NAO'])
+    rule_remontagem_4 = control.Rule(color_in['MEDIUM'] & (tanins_in['MEDIUM'] | tanins_in['BAD']), remontagem_out['SIM'])
 
     # CONTROL SYSTEM
     remontagem_control = control.ControlSystem([rule_remontagem_1, rule_remontagem_2, rule_remontagem_3, rule_remontagem_4])
@@ -193,32 +184,7 @@ def fuzzy_initialization(use_tanins):
     ##   EOF FUZZY DEFINITION   ##
     ##############################
 
-    if use_tanins:
-        return density, color, tanins, remontagem, chiller
-    else:
-        return density, color, remontagem, chiller
-
-
-# NORMALIZE VALUES
-def norm_and_error(values, results_in, initial_date):
-
-    # NORMALIZE DENSITY
-    results_in[0] = abs(round((values[5] - values[0])*100))
-
-    # NORMALIZE COLOR
-    results_in[1] = abs(round((values[6] - values[1])*100))
-
-    # NORMALIZE TEMPERATURE
-    results_in[2] = abs(round((values[7] - values[2])*100))
-
-    # NORMALIZE TANINS
-    results_in[3] = abs(round((values[8] - values[3])*100))
-
-    # NORMALIZE TIME
-    time_delta = datetime.date.today() - initial_date
-    results_in[4] = time_delta.days
-
-    return results_in
+    return density, color, tanins, remontagem, chiller
 
 
 # GET INPUTS FROM MAIN PROGRAM
@@ -234,7 +200,7 @@ def get_input(communication_queue, values):
 
         # WILL RECEIVE SENSOR VALUE
         if rule == -1:
-            for i in range (4):
+            for i in range(4):
                 values[i+5] = communication_queue.get()
             break
 
@@ -245,11 +211,8 @@ def get_input(communication_queue, values):
 
         # WILL RECEIVE REFERENCE VALUE
         if rule == -2:
-
             for i in range(5):
-                temp = communication_queue.get()
-                if temp != -1:
-                    values[i] = temp
+                values[i] = communication_queue.get()
             break
 
             # values[0] --->  DENSITY       REFERENCE
@@ -261,9 +224,84 @@ def get_input(communication_queue, values):
         # RETURNS ERROR MESSAGE
         else:
             communication_queue.put(-1)
-            time.sleep(3)
+            time.sleep(2)
 
-    return rule, values
+    return values
+
+
+# NORMALIZE VALUES
+def norm_and_error(communication_queue, values, results_in, initial_date, interval):
+
+    # NORMALIZE DENSITY
+    error = (values[5] - values[0])/interval[0]
+    if error > 1:
+        communication_queue.put(-2)
+        results_in[0] = 1
+    elif error < -1:
+        communication_queue.put(-2)
+        results_in[0] = -1
+    elif error < 0:
+        communication_queue.put(-3)
+        results_in[0] = abs(error)
+    else:
+        results_in[0] = error
+
+    # NORMALIZE COLOR
+    error = (values[1] - values[6])/interval[1]
+    if error > 1:
+        communication_queue.put(-4)
+        results_in[1] = 1
+    elif error < -1:
+        communication_queue.put(-4)
+        results_in[1] = -1
+    elif error < 0:
+        communication_queue.put(-5)
+        results_in[1] = abs(error)
+    else:
+        results_in[1] = error
+
+    # NORMALIZE TEMPERATURE
+    error = ((values[7] - values[2])/interval[2]) + 0.5
+    if error > 1:
+        communication_queue.put(-6)
+        results_in[2] = 1
+    elif error < -1:
+        communication_queue.put(-6)
+        results_in[2] = -1
+    else:
+        results_in[2] = abs(error)
+
+    # NORMALIZE TIME
+    elapsed_time = datetime.datetime.now() - initial_date
+    normalized_elapsed = (elapsed_time.total_seconds()/(60*60*values[3]*24))
+    if normalized_elapsed > 1:
+        communication_queue.put(-7)
+        results_in[3] = 1
+    else:
+        results_in[3] = normalized_elapsed
+
+    # NORMALIZE TANINS
+    error = (values[4] - values[8])/interval[3]
+    if error > 1:
+        communication_queue.put(-8)
+        results_in[4] = 1
+    elif error < -1:
+        communication_queue.put(-8)
+        results_in[4] = -1
+    elif error < 0:
+        communication_queue.put(-9)
+        results_in[4] = abs(error)
+    else:
+        results_in[4] = error
+
+    return results_in
+
+
+# SIMULATE FUZZY USING NORMALIZED VALUES
+def fuzzy_work(communication_queue, results_in, results_out, density, color, tanins, remontagem, chiller):
+
+
+    return results_out
 
 
 # THIS IS THE MAIN CONTROL ROUTINE
@@ -287,8 +325,9 @@ def control_routine(communication_queue):
     ##############################
     # VARIABLES TO CONTROL THE BEHAVIOUR OF THE PROGRAM
 
-    use_tanins = False      # USE TANINS TABLE OR NOT
-    use_sensor = False      # USING SENSORS OR NOT - IF SIMULATING CHOOSE FALSE
+    use_sensor = False     # USING SENSORS OR NOT - IF SIMULATING CHOOSE FALSE
+    all_good   = True      # GUARANTEES NO ERRORS ARE BEING MADE IN MIDDLE STAGES - NO TOUCH
+    first_run  = True      # WARNS PROGRAM IT'S RUNNING FOR FIRST TIME
 
 
     ##############################
@@ -296,6 +335,7 @@ def control_routine(communication_queue):
     ##############################
     # GENERIC VALUE TO BE USED BY MAIN FUNCTION
     values = arr.array('i', [0, 0, 0, 0, 0, 0, 0, 0, 0])
+    interval = arr.array('i', [0, 0, 0, 0])
     results_in = arr.array('i', [0, 0, 0, 0, 0])
     results_out = arr.array('B', [0, 0])
     initial_date = datetime.date.today()
@@ -306,10 +346,7 @@ def control_routine(communication_queue):
     ##############################
     # INITIALIZE FUZZY CONTROL VARIABLES
 
-    if use_tanins:
-        density, color, tanins, remontagem, chiller = fuzzy_initialization(use_tanins)
-    else:
-        density, color, remontagem, chiller = fuzzy_initialization(use_tanins)
+    density, color, tanins, remontagem, chiller = fuzzy_initialization()
 
 
     ##############################
@@ -319,23 +356,23 @@ def control_routine(communication_queue):
 
     if use_sensor:
 
-        values[0] = communication_queue.get()   # DENSITY       REFERENCE
-        values[1] = communication_queue.get()   # COLOR         REFERENCE
-        values[2] = communication_queue.get()   # TEMPERATURE   REFERENCE
-        values[3] = communication_queue.get()   # TANINS        REFERENCE
-        values[4] = communication_queue.get()   # TIME          REFERENCE
+        values[0] = communication_queue.get()       # DENSITY       REFERENCE
+        values[1] = communication_queue.get()       # COLOR         REFERENCE
+        values[2] = communication_queue.get()       # TEMPERATURE   REFERENCE
+        values[3] = communication_queue.get()       # TIME          REFERENCE
+        values[4] = communication_queue.get()       # TANINS        REFERENCE
 
     # USE THIS TO SET INITIAL SIMULATION REFERENCES
     else:
         values[0] = 995                         # DENSITY       REFERENCE - FINAL VALUE FOR DENSITY in kg/L
         values[1] = 400                         # COLOR         REFERENCE - FINAL VALUE FOR COLOR in NTU
         values[2] = 25                          # TEMPERATURE   REFERENCE - CONSTANT VALUE FOR TEMPERATURE in ºC
-        values[3] = 15                          # TANINS        REFERENCE - VALUE FOR TANINS in percentage% / Volume
-        values[4] = 15                          # TIME          REFERENCE - FINAL VALUE FOR TIME in days
-        values[5] = 1000                        # DENSITY       SENSOR
-        values[6] = 100                         # COLOR         SENSOR
+        values[3] = 15                          # TIME          REFERENCE - FINAL VALUE FOR TIME in days
+        values[4] = 400                         # TANINS        REFERENCE - VALUE FOR TANINS in percentage% / Volume
+        values[5] = 1080                        # DENSITY       SENSOR
+        values[6] = 300                         # COLOR         SENSOR
         values[7] = 22                          # TEMPERATURE   SENSOR
-        values[8] = 12                          # TANINS        SENSOR
+        values[8] = 100                         # TANINS        SENSOR
 
     ##############################
     ##    MAIN CONTROL CYCLE    ##
@@ -347,13 +384,25 @@ def control_routine(communication_queue):
         ##############################
         ##    INPUT DEFINITION      ##
         ##############################
-        # DEFINES VALUES FROM SENSORS
 
+        # DEFINES VALUES FROM SENSORS
         if use_sensor:
-            values = get_input(communication_queue,values)
+            values = get_input(communication_queue, values)
+
+        # DEFINES INTERVALS FOR ERROR REFERENCE
+        if first_run:
+            interval[0] = values[5] - values[0]  # DENSITY      INTERVAL
+            interval[1] = values[1] - values[6]  # COLOR        INTERVAL
+            interval[2] = 20                     # TEMPERATURE  INTERVAL
+            interval[3] = values[4] - values[8]  # TANINS       INTERVAL
+            first_run = False
 
         # NORMALIZATION OF VALUES
-        results_in = norm_and_error(values, results_in, initial_date)
+        results_in = norm_and_error(communication_queue, values, results_in, initial_date, interval)
+
+        # SET FUZZY TO SIMULATE
+        results_out = fuzzy_work(communication_queue, results_in, results_out, density, color, tanins,
+                                 remontagem, chiller)
 
 
 

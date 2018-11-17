@@ -6,10 +6,40 @@ import numpy as np
 import matplotlib.pyplot as plt
 import skfuzzy as fuzz
 
+import datetime
+import time
+
+a = 15
+
+initial_date = datetime.datetime.now()
+end_time = 14*24
+
+elapsed_time = datetime.timedelta(days=16)
+print(elapsed_time)
+
+elapseded_time = (elapsed_time.total_seconds()/(60*60))/end_time
+
+print(elapseded_time)
+print(initial_date)
+print(end_time)
+
+b = datetime.date.today()
+
+
+
+
+time.sleep(5)
+b = datetime.datetime.now()
+c = b - a
+
+print(c)
+print(c.hours)
+print(c.seconds)
+
 ##############################
 ##     EOF  LIBRARIES       ##
 ##############################
-
+"""
 # Generate universe variables
 # * Quality and service on subjective ranges [0, 10]
 # * Tip has a range of [0, 25] in units of percentage points
@@ -104,4 +134,6 @@ for ax in (ax0,):
     ax.get_yaxis().tick_left()
 plt.tight_layout()
 plt.show()
+"""
+
 
