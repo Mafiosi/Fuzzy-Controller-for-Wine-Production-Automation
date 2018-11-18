@@ -18,9 +18,9 @@ tip['average'] = fuzz.trimf(tip.universe, [0, 13, 25])
 tip['good'] = fuzz.trimf(tip.universe, [13, 25, 25])
 
 # You can see how these look with .view()
-quality['average'].view()
-service.view()
-tip.view()
+#quality['average'].view()
+#service.view()
+#tip.view()
 
 # Rule objects connect one or more antecedent membership functions with
 # one or more consequent membership functions, using 'or' or 'and' to combine the antecedents.
@@ -31,7 +31,7 @@ rule1 = ctrl.Rule(quality['poor'] | service['poor'], tip['poor'])
 rule2 = ctrl.Rule(service['average'], tip['average'])
 rule3 = ctrl.Rule(service['good'] | quality['good'], tip['good'])
 
-rule1.view()
+#rule1.view()
 
 # Create a new ControlSystem with these rules added
 # Note: it is possible to create an empty ControlSystem() and build it up interactively.
@@ -51,18 +51,18 @@ tipping.input['service'] = 9.8
 tipping.compute()
 
 # Output available as a dict, for arbitrary number of consequents
-print (tipping.output['tip'])
+#print (tipping.output['tip'])
 tip.view(sim=tipping)
 
 
 # Viewing the Consequent again after computation shows the calculated system
-tip.view(sim=tipping)
-quality.view(sim=tipping)
+#tip.view(sim=tipping)
+#quality.view(sim=tipping)
 
 
 
 
-
+"""
 ###############
 # More sophesticated system
 
@@ -93,3 +93,4 @@ sys2.view()
 sys2_sim.print_state()
 
 a = 5
+"""
