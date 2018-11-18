@@ -20,7 +20,7 @@ import threading
 
 
 # INITIALIZATION OF CONTROLLER
-def fuzzy_initialization(print_graphs):
+def fuzzy_initialization():
 
     ##############################
     ##    FUZZY DEFINITION      ##
@@ -193,7 +193,7 @@ def fuzzy_initialization(print_graphs):
 
 
 # GET INPUTS FROM MAIN PROGRAM
-def get_input(communication_queue, values):
+def get_input(communication_queue, values, interval, first_run):
 
     # WAIT FOR MESSAGE FROM MAIN PROGRAM
     # -1 - SENSOR INPUT
@@ -217,7 +217,9 @@ def get_input(communication_queue, values):
         # WILL RECEIVE REFERENCE VALUE
         if rule == -2:
             for i in range(5):
-                values[i] = communication_queue.get()
+                temp = communication_queue.get()
+                if temp != -1:
+                    values[i] = temp
             break
 
             # values[0] --->  DENSITY       REFERENCE
@@ -231,7 +233,13 @@ def get_input(communication_queue, values):
             communication_queue.put(-1)
             time.sleep(2)
 
-    return values
+    if first_run:
+        interval[0] = values[5] - values[0]         # DENSITY       INTERVAL
+        interval[1] = values[1] - values[6]         # COLOR         INTERVAL
+        interval[2] = 20                            # TEMPERATURE   INTERVAL
+        interval[3] = values[4] - values[8]         # TANINS        INTERVAL
+
+    return values, interval
 
 
 # NORMALIZE VALUES
@@ -355,14 +363,12 @@ def process_results(communication_queue, remontagem, chiller, remontagem_thresho
 
 
 # PRINT RESULTS
-def print_results(time_var, density_error, density_out, density_control, density,
-                  color_error, color_out, color_control, color,
-                  tanins_error, tanins_out, tanins_control, tanins,
-                  color_in, tanins_in, remontagem_out, remontagem_control, remontagem,
-                  temp_in, density_in, chiller_out, chiller_control, chiller):
+def print_results(time_var, density_error, density_out, density_control, density, color_error, color_out, color_control,
+                  color, tanins_error, tanins_out, tanins_control, tanins, color_in, tanins_in, remontagem_out,
+                  remontagem_control, remontagem, temp_in, density_in, chiller_out, chiller_control, chiller):
 
     # GENERIC FUNCTIONS EXAMPLES
-    if True:
+    if False:
         time_var.view()
         density_error.view()
         density_out.view()
@@ -376,6 +382,31 @@ def print_results(time_var, density_error, density_out, density_control, density
         density_error.view(sim=density)
         density_out.view(sim=density)
         density_control.view()
+
+        # DENSITY SAMPLING
+        space = np.linspace(0, 1.1, 21)
+        x, y = np.meshgrid(space, space)
+        z = np.zeros_like(x)
+
+        # Loop through the system 21*21 times to collect the control surface
+        for i in range(21):
+            for j in range(21):
+                density.input['time_var'] = x[i, j]
+                density.input['density_error'] = y[i, j]
+                density.compute()
+                z[i, j] = density.output['density_out']
+
+        fig = plt.figure(figsize=(8, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap='viridis',
+                        linewidth=0.4, antialiased=True)
+        ax.contourf(x, y, z, zdir='z', offset=3, cmap='viridis', alpha=0.5)
+        ax.contourf(x, y, z, zdir='x', offset=3, cmap='viridis', alpha=0.5)
+        ax.contourf(x, y, z, zdir='y', offset=3, cmap='viridis', alpha=0.5)
+        ax.set_zlim(0, 1)
+        ax.view_init(30, 60)
+        plt.show()
+
 
     # COLOR
     if False:
@@ -399,7 +430,7 @@ def print_results(time_var, density_error, density_out, density_control, density
         remontagem_control.view()
 
     # CHILLER
-    if False:
+    if True:
         temp_in.view(sim=chiller)
         density_in.view(sim=chiller)
         color_in.view(sim=chiller)
@@ -407,15 +438,15 @@ def print_results(time_var, density_error, density_out, density_control, density
         chiller_control.view()
 
         # CHILLER SAMPLING
-        space = np.linspace(0, 1, 31)
+        space = np.linspace(0, 1.1, 21)
         x, y = np.meshgrid(space, space)
         z = np.zeros_like(x)
 
         # Loop through the system 21*21 times to collect the control surface
-        for i in range(31):
-            for j in range(31):
+        for i in range(21):
+            for j in range(21):
                 chiller.input['temperature_in'] = x[i, j]
-                chiller.input['color_in'] = 0
+                chiller.input['color_in'] = (1*0.4)
                 chiller.input['density_in'] = y[i, j]
                 chiller.compute()
                 z[i, j] = chiller.output['chiller_out']
@@ -428,6 +459,7 @@ def print_results(time_var, density_error, density_out, density_control, density
         # ax.contourf(x, y, z, zdir='x', offset=3, cmap='viridis', alpha=0.5)
         # ax.contourf(x, y, z, zdir='y', offset=3, cmap='viridis', alpha=0.5)
         ax.view_init(30, 200)
+        ax.set_zlim(0, 1)
         plt.show()
 
 
@@ -449,6 +481,7 @@ def control_routine(communication_queue):
 
     use_sensor   = False    # USING SENSORS OR NOT - IF SIMULATING CHOOSE FALSE
     print_graphs = True     # PRINT GRAPHS FOR PRESENTATION
+    first_run = True        # WARNS OF FIRST RUN TRIALS - DO NOT CHANGE
 
 
     ##############################
@@ -458,6 +491,7 @@ def control_routine(communication_queue):
     values = arr.array('i', [0, 0, 0, 0, 0, 0, 0, 0, 0])
     interval = arr.array('i', [0, 0, 0, 0])
     results_in = arr.array('f', [0, 0, 0, 0, 0])
+    initial_date = datetime.datetime.now()          # INITIAL DATE  REFERENCE
 
 
     ##############################
@@ -484,15 +518,14 @@ def control_routine(communication_queue):
         values[6] = 300                         # COLOR         SENSOR
         values[7] = 22                          # TEMPERATURE   SENSOR
         values[8] = 100                         # TANINS        SENSOR
+        interval[0] = values[5] - values[0]     # DENSITY       INTERVAL
+        interval[1] = values[1] - values[6]     # COLOR         INTERVAL
+        interval[2] = 20                        # TEMPERATURE   INTERVAL
+        interval[3] = values[4] - values[8]     # TANINS        INTERVAL
 
-    # DEFINES INTERVALS FOR ERROR REFERENCE
-    interval[0] = values[5] - values[0]         # DENSITY       INTERVAL
-    interval[1] = values[1] - values[6]         # COLOR         INTERVAL
-    interval[2] = 20                            # TEMPERATURE   INTERVAL
-    interval[3] = values[4] - values[8]         # TANINS        INTERVAL
+    # DEFINES THRESHOLD FOR FINAL EVALUATION
     remontagem_threshold = 0.7                  # REMONTAGEM    THRESHOLD FOR END VALUE
     chiller_threshold = 0.7                     # CHILLER       THRESHOLD FOR END VALUE
-    initial_date = datetime.datetime.now()      # INITIAL DATE  REFERENCE
 
 
     ##############################
@@ -504,7 +537,7 @@ def control_routine(communication_queue):
     color_error, color_out, color_control, color, \
     tanins_error, tanins_out, tanins_control, tanins, \
     color_in, tanins_in, remontagem_out, remontagem_control, remontagem, \
-    temp_in, density_in, chiller_out, chiller_control, chiller = fuzzy_initialization(print_graphs)
+    temp_in, density_in, chiller_out, chiller_control, chiller = fuzzy_initialization()
 
 
     ##############################
@@ -520,7 +553,8 @@ def control_routine(communication_queue):
 
         # DEFINES VALUES FROM SENSORS
         if use_sensor:
-            values = get_input(communication_queue, values)
+            values, interval = get_input(communication_queue, values, interval, first_run)
+            first_run = False
 
 
         # NORMALIZATION OF VALUES
@@ -564,10 +598,10 @@ if __name__ == "__main__":
             print("\nEOF ERROR LIST")
             temp = communication_queue.get()
             results.append(temp)
+            print("REMONTAGEM WILL WORK = " + str(temp))
             temp = communication_queue.get()
             results.append(temp)
-            print("REMONTAGEM WILL WORK = " + str(results[0]))
-            print("CHILLER    WILL WORK = " + str(results[1]))
+            print("CHILLER    WILL WORK = " + str(temp))
             break
 
         # ERROR RESULT
