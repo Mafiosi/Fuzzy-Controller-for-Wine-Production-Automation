@@ -2,6 +2,10 @@
 ##        LIBRARIES         ##
 ##############################
 
+import datetime
+import pickle
+
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 import skfuzzy as fuzz
@@ -35,7 +39,71 @@ c = b - a
 print(c)
 print(c.hours)
 print(c.seconds)
+"""
 
+import threading
+from queue import Queue
+import time
+"""
+def something(queue):
+
+    try:
+        val = queue.get(True, 5)
+    except:
+        print("NOTHING")
+        return
+
+    print(val)
+"""
+
+if __name__ == "__main__":
+
+
+    list = []
+    list.append(4)
+    list.append(datetime.datetime.now())
+    list.append(45)
+    list.append(432)
+
+    f = open('pickle.test', 'wb')
+    pickle.dump(list, f)
+
+    f.close()
+
+    with open('pickle.test', 'rb') as f:
+        c = pickle.load(f)
+
+
+    for x in c:
+        print(x)
+        if x == 45:
+            print("here I am")
+
+    time.sleep(5)
+    fff = datetime.datetime.now() - c[1]
+    print(fff)
+
+
+
+
+
+
+
+"""
+    dict = {1: [0, 1, 1], 2: [2, -1, -1]}
+
+    for i in dict.items():
+        print(i[0])
+
+        for j in i[1]:
+            print(j)
+
+    x = 122223333.777777
+    print(x)
+    print(int(x))
+
+    print("FINISH")
+"""
 ##############################
 ##     EOF  LIBRARIES       ##
 ##############################

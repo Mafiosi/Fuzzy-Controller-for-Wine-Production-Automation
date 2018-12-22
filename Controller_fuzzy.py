@@ -42,9 +42,20 @@ def fuzzy_initialization():
     density_out = control.Consequent(np.arange(0, 1.01, 0.01), 'density_out')
 
     # MEMBERSHIP SHAPE
-    time_var.automf(5, 'quant', standard_in_5)
-    density_error.automf(3, 'quant', standard_in_3)
-    density_out.automf(3, 'quant', standard_out_3)
+    time_var['BIG LOW'] = fuzz.trapmf(time_var.universe, [0, 0, 0.1, 0.3])
+    time_var['LOW'] = fuzz.trimf(time_var.universe, [0.1, 0.3, 0.5])
+    time_var['MEDIUM'] = fuzz.trimf(time_var.universe, [0.3, 0.5, 0.7])
+    time_var['HIGH'] = fuzz.trimf(time_var.universe, [0.5, 0.7, 0.9])
+    time_var['BIG HIGH'] = fuzz.trapmf(time_var.universe, [0.7, 0.9, 1, 1])
+
+    density_error['LOW'] = fuzz.trapmf(density_error.universe, [0, 0, 0.2, 0.5])
+    density_error['MEDIUM'] = fuzz.trimf(density_error.universe, [0.2, 0.5, 0.8])
+    density_error['HIGH'] = fuzz.trapmf(density_error.universe, [0.5, 0.8, 1, 1])
+
+    density_out['BAD'] = fuzz.trapmf(density_out.universe, [0, 0, 0.2, 0.5])
+    density_out['MEDIUM'] = fuzz.trimf(density_out.universe, [0.2, 0.5, 0.8])
+    density_out['GOOD'] = fuzz.trapmf(density_out.universe, [0.5, 0.8, 1, 1])
+
 
     # RULES
     rule_density_1 = control.Rule(time_var['BIG LOW'], density_out['GOOD'])
@@ -74,24 +85,34 @@ def fuzzy_initialization():
 
     # MEMBERSHIP SHAPE
     # TIME_VAR ALREADY DEFINED BEFORE IN DENSITY
-    color_error.automf(3, 'quant', standard_in_3)
-    color_out.automf(3, 'quant', standard_out_3)
+    color_error['BIG LOW'] = fuzz.trapmf(color_error.universe, [0, 0, 0.1, 0.3])
+    color_error['LOW'] = fuzz.trimf(color_error.universe, [0.1, 0.3, 0.5])
+    color_error['MEDIUM'] = fuzz.trapmf(color_error.universe, [0.3, 0.5, 0.6, 0.8])
+    color_error['HIGH'] = fuzz.trapmf(color_error.universe, [0.6, 0.8, 1, 1])
+
+    color_out['BAD'] = fuzz.trapmf(color_out.universe, [0, 0, 0.2, 0.5])
+    color_out['MEDIUM'] = fuzz.trimf(color_out.universe, [0.2, 0.5, 0.8])
+    color_out['GOOD'] = fuzz.trapmf(color_out.universe, [0.5, 0.8, 1, 1])
+
 
     # RULES
     rule_color_1 = control.Rule(time_var['BIG LOW'], color_out['GOOD'])
     rule_color_2 = control.Rule(time_var['LOW'], color_out['GOOD'])
     rule_color_3 = control.Rule(time_var['MEDIUM'] & color_error['HIGH'], color_out['MEDIUM'])
-    rule_color_4 = control.Rule(time_var['MEDIUM'] & (color_error['MEDIUM'] | color_error['LOW']), color_out['GOOD'])
+    rule_color_4 = control.Rule(time_var['MEDIUM'] & (color_error['MEDIUM'] | color_error['LOW'] | color_error['BIG LOW']), color_out['GOOD'])
     rule_color_5 = control.Rule(time_var['HIGH'] & color_error['HIGH'], color_out['BAD'])
     rule_color_6 = control.Rule(time_var['HIGH'] & color_error['MEDIUM'], color_out['MEDIUM'])
     rule_color_7 = control.Rule(time_var['HIGH'] & color_error['LOW'], color_out['GOOD'])
     rule_color_8 = control.Rule(time_var['BIG HIGH'] & (color_error['HIGH'] | color_error['MEDIUM']), color_out['BAD'])
     rule_color_9 = control.Rule(time_var['BIG HIGH'] & color_error['LOW'], color_out['MEDIUM'])
+    rule_color_10 = control.Rule(time_var['HIGH'] & color_error['BIG LOW'], color_out['GOOD'])
+    rule_color_11 = control.Rule(color_error['BIG LOW'], color_out['GOOD'])
+
 
     # CONTROL SYSTEM
     color_control = control.ControlSystem([rule_color_1, rule_color_2, rule_color_3, rule_color_4,
                                            rule_color_5, rule_color_6, rule_color_7, rule_color_8,
-                                           rule_color_9])
+                                           rule_color_9, rule_color_10, rule_color_11])
 
     color = control.ControlSystemSimulation(color_control)
 
@@ -104,24 +125,32 @@ def fuzzy_initialization():
 
     # MEMBERSHIP SHAPE
     # TIME_VAR ALREADY DEFINED BEFORE IN DENSITY
-    tanins_error.automf(3, 'quant', standard_in_3)
-    tanins_out.automf(3, 'quant', standard_out_3)
+    tanins_error['BIG LOW'] = fuzz.trapmf(tanins_error.universe, [0, 0, 0.1, 0.3])
+    tanins_error['LOW'] = fuzz.trimf(tanins_error.universe, [0.1, 0.3, 0.5])
+    tanins_error['MEDIUM'] = fuzz.trapmf(tanins_error.universe, [0.3, 0.5, 0.6, 0.8])
+    tanins_error['HIGH'] = fuzz.trapmf(tanins_error.universe, [0.6, 0.8, 1, 1])
+
+    tanins_out['BAD'] = fuzz.trapmf(tanins_out.universe, [0, 0, 0.2, 0.5])
+    tanins_out['MEDIUM'] = fuzz.trimf(tanins_out.universe, [0.2, 0.5, 0.8])
+    tanins_out['GOOD'] = fuzz.trapmf(tanins_out.universe, [0.5, 0.8, 1, 1])
 
     # RULES
     rule_tanins_1 = control.Rule(time_var['BIG LOW'], tanins_out['GOOD'])
     rule_tanins_2 = control.Rule(time_var['LOW'], tanins_out['GOOD'])
     rule_tanins_3 = control.Rule(time_var['MEDIUM'] & tanins_error['HIGH'], tanins_out['MEDIUM'])
-    rule_tanins_4 = control.Rule(time_var['MEDIUM'] & (tanins_error['MEDIUM'] | tanins_error['LOW']), tanins_out['GOOD'])
+    rule_tanins_4 = control.Rule(time_var['MEDIUM'] & (tanins_error['MEDIUM'] | tanins_error['LOW'] | tanins_error['BIG LOW']), tanins_out['GOOD'])
     rule_tanins_5 = control.Rule(time_var['HIGH'] & tanins_error['HIGH'], tanins_out['BAD'])
     rule_tanins_6 = control.Rule(time_var['HIGH'] & tanins_error['MEDIUM'], tanins_out['MEDIUM'])
     rule_tanins_7 = control.Rule(time_var['HIGH'] & tanins_error['LOW'], tanins_out['GOOD'])
     rule_tanins_8 = control.Rule(time_var['BIG HIGH'] & (tanins_error['HIGH'] | tanins_error['MEDIUM']), tanins_out['BAD'])
     rule_tanins_9 = control.Rule(time_var['BIG HIGH'] & tanins_error['LOW'], tanins_out['MEDIUM'])
+    rule_tanins_10 = control.Rule(tanins_error['BIG LOW'], tanins_out['GOOD'])
+    rule_tanins_11 = control.Rule(time_var['HIGH'] & tanins_error['BIG LOW'], tanins_out['GOOD'])
 
     # CONTROL SYSTEM
     tanins_control = control.ControlSystem([rule_tanins_1, rule_tanins_2, rule_tanins_3, rule_tanins_4,
                                             rule_tanins_5, rule_tanins_6, rule_tanins_7, rule_tanins_8,
-                                            rule_tanins_9])
+                                            rule_tanins_9, rule_tanins_10, rule_tanins_11])
 
     tanins = control.ControlSystemSimulation(tanins_control)
 
@@ -134,17 +163,22 @@ def fuzzy_initialization():
     remontagem_out = control.Consequent(np.arange(0, 1.01, 0.01), 'remontagem_out')
 
     # MEMBERSHIP SHAPE (TANINS NAME DEPEND ON TABLE USE)
-    color_in.automf(3, 'quant', special_inout_3)
-    tanins_in.automf(3, 'quant', special_inout_3)
+    color_in['BAD'] = fuzz.trapmf(color_in.universe, [0, 0, 0.2, 0.5])
+    color_in['MEDIUM'] = fuzz.trimf(color_in.universe, [0.2, 0.5, 0.8])
+    color_in['GOOD'] = fuzz.trapmf(color_in.universe, [0.5, 0.8, 1, 1])
+
+    tanins_in['LOW'] = fuzz.trapmf(tanins_in.universe, [0, 0, 0.2, 0.5])
+    tanins_in['OK'] = fuzz.trimf(tanins_in.universe, [0.2, 0.5, 0.8])
+    tanins_in['HIGH'] = fuzz.trapmf(tanins_in.universe, [0.5, 0.8, 1, 1])
+
     remontagem_out['NAO'] = fuzz.trapmf(remontagem_out.universe, [0, 0, 0.2, 0.2])
     remontagem_out['SIM'] = fuzz.trapmf(remontagem_out.universe, [0.8, 0.8, 1, 1])
-
 
     # RULES (TANINS NAME DEPEND ON TABLE USE)
     rule_remontagem_1 = control.Rule(color_in['GOOD'], remontagem_out['NAO'])
     rule_remontagem_2 = control.Rule(color_in['BAD'], remontagem_out['SIM'])
-    rule_remontagem_3 = control.Rule(color_in['MEDIUM'] & tanins_in['GOOD'], remontagem_out['NAO'])
-    rule_remontagem_4 = control.Rule(color_in['MEDIUM'] & (tanins_in['MEDIUM'] | tanins_in['BAD']), remontagem_out['SIM'])
+    rule_remontagem_3 = control.Rule(color_in['MEDIUM'] & tanins_in['HIGH'], remontagem_out['NAO'])
+    rule_remontagem_4 = control.Rule(color_in['MEDIUM'] & (tanins_in['OK'] | tanins_in['LOW']), remontagem_out['SIM'])
 
     # CONTROL SYSTEM
     remontagem_control = control.ControlSystem([rule_remontagem_1, rule_remontagem_2, rule_remontagem_3, rule_remontagem_4])
@@ -162,10 +196,17 @@ def fuzzy_initialization():
 
     # MEMBERSHIP SHAPE
     # COLOR_IN ALREADY CREATED BEFORE IN REMONTAGEM
-    temp_in.automf(3, 'quant', temp_in_3)
-    density_in.automf(3, 'quant', special_inout_3)
-    chiller_out['NAO'] = fuzz.trapmf(remontagem_out.universe, [0, 0, 0.2, 0.2])
-    chiller_out['SIM'] = fuzz.trapmf(remontagem_out.universe, [0.8, 0.8, 1, 1])
+
+    temp_in['NEG'] = fuzz.trapmf(temp_in.universe, [0, 0, 0.4, 0.5])
+    temp_in['OK'] = fuzz.trimf(temp_in.universe, [0.4, 0.5, 0.6])
+    temp_in['POS'] = fuzz.trapmf(temp_in.universe, [0.5, 0.6, 1, 1])
+
+    density_in['BAD'] = fuzz.trapmf(density_in.universe, [0, 0, 0.2, 0.5])
+    density_in['MEDIUM'] = fuzz.trimf(density_in.universe, [0.2, 0.5, 0.8])
+    density_in['GOOD'] = fuzz.trapmf(density_in.universe, [0.5, 0.8, 1, 1])
+
+    chiller_out['NAO'] = fuzz.trapmf(chiller_out.universe, [0, 0, 0.2, 0.2])
+    chiller_out['SIM'] = fuzz.trapmf(chiller_out.universe, [0.8, 0.8, 1, 1])
 
     # RULES
     rule_chiller_1 = control.Rule(temp_in['NEG'], chiller_out['NAO'])
@@ -174,10 +215,11 @@ def fuzzy_initialization():
     rule_chiller_4 = control.Rule(temp_in['OK'] & color_in['BAD'] & (density_in['MEDIUM'] | density_in['GOOD']), chiller_out['SIM'])
     rule_chiller_5 = control.Rule(temp_in['OK'] & color_in['MEDIUM'] & density_in['GOOD'], chiller_out['SIM'])
     rule_chiller_6 = control.Rule(temp_in['OK'] & color_in['GOOD'], chiller_out['NAO'])
+    rule_chiller_7 = control.Rule(temp_in['OK'] & color_in['MEDIUM'] & (density_in['BAD'] | density_in['MEDIUM']), chiller_out['NAO'])
 
     # CONTROL SYSTEM
     chiller_control = control.ControlSystem([rule_chiller_1, rule_chiller_2, rule_chiller_3, rule_chiller_4,
-                                             rule_chiller_5, rule_chiller_6])
+                                             rule_chiller_5, rule_chiller_6, rule_chiller_7])
 
     chiller = control.ControlSystemSimulation(chiller_control)
 
@@ -201,7 +243,7 @@ def get_input(communication_queue, values, interval, first_run):
 
     while True:
 
-        rule = communication_queue.get()
+        rule = communication_queue.get(True, 5)
 
         # WILL RECEIVE SENSOR VALUE
         if rule == -1:
@@ -252,7 +294,7 @@ def norm_and_error(communication_queue, values, results_in, initial_date, interv
         results_in[0] = 1
     elif error < -1:
         communication_queue.put(-2)
-        results_in[0] = -1
+        results_in[0] = 1
     elif error < 0:
         communication_queue.put(-3)
         results_in[0] = abs(error)
@@ -266,7 +308,7 @@ def norm_and_error(communication_queue, values, results_in, initial_date, interv
         results_in[1] = 1
     elif error < -1:
         communication_queue.put(-4)
-        results_in[1] = -1
+        results_in[1] = 0
     elif error < 0:
         communication_queue.put(-5)
         results_in[1] = abs(error)
@@ -280,7 +322,7 @@ def norm_and_error(communication_queue, values, results_in, initial_date, interv
         results_in[2] = 1
     elif error < -1:
         communication_queue.put(-6)
-        results_in[2] = -1
+        results_in[2] = 1
     else:
         results_in[2] = abs(error)
 
@@ -300,7 +342,7 @@ def norm_and_error(communication_queue, values, results_in, initial_date, interv
         results_in[4] = 1
     elif error < -1:
         communication_queue.put(-8)
-        results_in[4] = -1
+        results_in[4] = 0
     elif error < 0:
         communication_queue.put(-9)
         results_in[4] = abs(error)
@@ -423,7 +465,7 @@ def print_results(time_var, density_error, density_out, density_control, density
         tanins_control.view()
 
     # REMONTAGEM
-    if False:
+    if True:
         color_in.view(sim=remontagem)
         tanins_in.view(sim=remontagem)
         remontagem_out.view(sim=remontagem)
@@ -446,20 +488,23 @@ def print_results(time_var, density_error, density_out, density_control, density
         for i in range(21):
             for j in range(21):
                 chiller.input['temperature_in'] = x[i, j]
-                chiller.input['color_in'] = (1*0.4)
+                chiller.input['color_in'] = (1*0.7)
                 chiller.input['density_in'] = y[i, j]
                 chiller.compute()
                 z[i, j] = chiller.output['chiller_out']
 
         fig = plt.figure(figsize=(10, 10))
         ax = fig.add_subplot(111, projection='3d')
-        ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap='viridis',
+        ax.plot_surface(x, y, z,label='something', rstride=1, cstride=1, cmap='viridis',
                         linewidth=0.4, antialiased=True)
         # ax.contourf(x, y, z, zdir='z', offset=3, cmap='viridis', alpha=0.5)
         # ax.contourf(x, y, z, zdir='x', offset=3, cmap='viridis', alpha=0.5)
         # ax.contourf(x, y, z, zdir='y', offset=3, cmap='viridis', alpha=0.5)
         ax.view_init(30, 200)
         ax.set_zlim(0, 1)
+        ax.set_xlabel("Temperature", fontsize=18)
+        ax.set_ylabel("Density", fontsize=18)
+        ax.set_zlabel("Chiller", fontsize=18)
         plt.show()
 
 
@@ -481,13 +526,14 @@ def control_routine(communication_queue):
 
     use_sensor   = False    # USING SENSORS OR NOT - IF SIMULATING CHOOSE FALSE
     print_graphs = True     # PRINT GRAPHS FOR PRESENTATION
-    first_run = True        # WARNS OF FIRST RUN TRIALS - DO NOT CHANGE
+    first_run    = True        # WARNS OF FIRST RUN TRIALS - DO NOT CHANGE
 
 
     ##############################
     ##     GENERIC VARIABLES    ##
     ##############################
     # GENERIC VALUE TO BE USED BY MAIN FUNCTION
+
     values = arr.array('i', [0, 0, 0, 0, 0, 0, 0, 0, 0])
     interval = arr.array('i', [0, 0, 0, 0])
     results_in = arr.array('f', [0, 0, 0, 0, 0])
@@ -511,17 +557,17 @@ def control_routine(communication_queue):
     else:
         values[0] = 995                         # DENSITY       REFERENCE - FINAL VALUE FOR DENSITY in kg/L
         values[1] = 400                         # COLOR         REFERENCE - FINAL VALUE FOR COLOR in NTU
-        values[2] = 25                          # TEMPERATURE   REFERENCE - CONSTANT VALUE FOR TEMPERATURE in ºC
+        values[2] = 26                          # TEMPERATURE   REFERENCE - CONSTANT VALUE FOR TEMPERATURE in ºC
         values[3] = 15                          # TIME          REFERENCE - FINAL VALUE FOR TIME in days
-        values[4] = 400                         # TANINS        REFERENCE - VALUE FOR TANINS in percentage% / Volume
-        values[5] = 1080                        # DENSITY       SENSOR
+        values[4] = 2                           # TANINS        REFERENCE - VALUE FOR TANINS in percentage% / Volume
+        values[5] = 1015                        # DENSITY       SENSOR
         values[6] = 300                         # COLOR         SENSOR
-        values[7] = 22                          # TEMPERATURE   SENSOR
-        values[8] = 100                         # TANINS        SENSOR
-        interval[0] = values[5] - values[0]     # DENSITY       INTERVAL
-        interval[1] = values[1] - values[6]     # COLOR         INTERVAL
-        interval[2] = 20                        # TEMPERATURE   INTERVAL
-        interval[3] = values[4] - values[8]     # TANINS        INTERVAL
+        values[7] = 28                          # TEMPERATURE   SENSOR
+        values[8] = 1                           # TANINS        SENSOR
+        interval[0] = 1085 - 995                #values[5] - values[0]     # DENSITY       INTERVAL
+        interval[1] = 400                       #values[1] - values[6]     # COLOR         INTERVAL
+        interval[2] = 10                        # TEMPERATURE   INTERVAL
+        interval[3] = 2                         # values[4] - values[8]     # TANINS        INTERVAL
 
     # DEFINES THRESHOLD FOR FINAL EVALUATION
     remontagem_threshold = 0.7                  # REMONTAGEM    THRESHOLD FOR END VALUE
